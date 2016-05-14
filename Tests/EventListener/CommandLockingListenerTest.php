@@ -19,6 +19,16 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
 
     }
 
+    public function testUsesExplicitlyRequestedLockManager()
+    {
+
+    }
+
+    public function testThrowsExceptionIfRequestedLockManagerIsNotAvailable()
+    {
+
+    }
+
     public function testRunsCommandIfNoLockIsRequested()
     {
 
