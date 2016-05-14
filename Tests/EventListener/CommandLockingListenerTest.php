@@ -4,6 +4,11 @@ namespace Matthimatiker\CommandLockingBundle\Tests\EventListener;
 
 class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
 {
+    public function testIsValidEventSubscriber()
+    {
+
+    }
+
     public function testAddsLockOption()
     {
 
