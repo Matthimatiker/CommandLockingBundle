@@ -36,27 +36,32 @@ class FileLockManagerTest extends \PHPUnit_Framework_TestCase
 
     public function testCanGetLock()
     {
-
+        $this->assertTrue($this->lockManager->lock('test'));
     }
 
     public function testCannotGetSameLockTwice()
     {
-
+        $this->lockManager->lock('test');
+        $this->assertFalse($this->lockManager->lock('test'));
     }
 
     public function testCanGetLockAfterRelease()
     {
-
+        $this->lockManager->lock('test');
+        $this->lockManager->release('test');
+        $this->assertTrue($this->lockManager->lock('test'));
     }
 
     public function testCanGetDifferentLocks()
     {
-
+        $this->assertTrue($this->lockManager->lock('first'));
+        $this->assertTrue($this->lockManager->lock('second'));
     }
 
     public function testCanCallReleaseEvenIfLockDoesNotExist()
     {
-
+        $this->setExpectedException(null);
+        $this->lockManager->release('missing');
     }
 
     /**
