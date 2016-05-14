@@ -3,6 +3,9 @@
 namespace Matthimatiker\CommandLockingBundle\EventListener;
 
 use Matthimatiker\CommandLockingBundle\Locking\LockManagerInterface;
+use Symfony\Component\Console\ConsoleEvents;
+use Symfony\Component\Console\Event\ConsoleCommandEvent;
+use Symfony\Component\Console\Event\ConsoleTerminateEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -30,7 +33,28 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     public static function getSubscribedEvents()
     {
-        // TODO: Implement getSubscribedEvents() method.
+        return array(
+            ConsoleEvents::COMMAND => 'beforeCommand',
+            ConsoleEvents::TERMINATE => 'afterCommand'
+        );
+    }
+
+    /**
+     * Called before a command runs.
+     *
+     * @param ConsoleCommandEvent $event
+     */
+    public function beforeCommand(ConsoleCommandEvent $event)
+    {
+    }
+
+    /**
+     * Called when a command terminates, either with success or via exception.
+     *
+     * @param ConsoleTerminateEvent $event
+     */
+    public function afterCommand(ConsoleTerminateEvent $event)
+    {
     }
 
     /**
