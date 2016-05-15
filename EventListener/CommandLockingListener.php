@@ -3,16 +3,28 @@
 namespace Matthimatiker\CommandLockingBundle\EventListener;
 
 use Matthimatiker\CommandLockingBundle\Locking\LockManagerInterface;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleTerminateEvent;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Hooks into the life-cycle of console commands and manages locks if requested.
+ *
+ * @see http://php-and-symfony.matthiasnoback.nl/2013/11/symfony2-add-a-global-option-to-console-commands-and-generate-pid-file/
  */
 class CommandLockingListener implements EventSubscriberInterface
 {
+    /**
+     * Name of the lock manager that is used if the manager is not explicitly
+     * specified via command line option.
+     *
+     * @var string
+     */
+    private $defaultLockManagerName = null;
+
     /**
      * Returns an array of event names this subscriber wants to listen to.
      *
@@ -40,12 +52,30 @@ class CommandLockingListener implements EventSubscriberInterface
     }
 
     /**
+     * @param string $defaultLockManagerName
+     */
+    public function __construct($defaultLockManagerName)
+    {
+        $this->defaultLockManagerName = $defaultLockManagerName;
+    }
+
+    /**
+     * @param string $name
+     * @param LockManagerInterface $lockManager
+     */
+    public function registerLockManager($name, LockManagerInterface $lockManager)
+    {
+
+    }
+
+    /**
      * Called before a command runs.
      *
      * @param ConsoleCommandEvent $event
      */
     public function beforeCommand(ConsoleCommandEvent $event)
     {
+        $this->registerLockOption($event->getCommand());
     }
 
     /**
@@ -58,19 +88,22 @@ class CommandLockingListener implements EventSubscriberInterface
     }
 
     /**
-     * @param string $defaultLockManagerName
+     * Registers the "--lock" option that is used to activate locking.
+     *
+     * @param Command $command
      */
-    public function __construct($defaultLockManagerName)
+    private function registerLockOption(Command $command)
     {
-
-    }
-
-    /**
-     * @param string $name
-     * @param LockManagerInterface $lockManager
-     */
-    public function registerLockManager($name, LockManagerInterface $lockManager)
-    {
-
+        $lockOption = new InputOption(
+            '--lock',
+            null,
+            InputOption::VALUE_OPTIONAL,
+            'Request a lock to ensure that the command does not run in parallel.',
+            $this->defaultLockManagerName
+        );
+        // Register the option at application level to ensure that it shows up in the help.
+        $command->getApplication()->getDefinition()->addOption($lockOption);
+        // Register at command level to ensure that the option is parsed properly.
+        $command->getDefinition()->addOption($lockOption);
     }
 }
