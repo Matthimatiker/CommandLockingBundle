@@ -3,6 +3,12 @@
 namespace Matthimatiker\CommandLockingBundle\Tests\EventListener;
 
 use Matthimatiker\CommandLockingBundle\EventListener\CommandLockingListener;
+use Matthimatiker\CommandLockingBundle\Locking\LockManagerInterface;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\StringInput;
+use Symfony\Component\Console\Output\NullOutput;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Webfactory\Constraint\IsEventSubscriberConstraint;
 
 class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
@@ -15,12 +21,25 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
     private $listener = null;
 
     /**
+     * @var LockManagerInterface|\PHPUnit_Framework_MockObject_MockObject
+     */
+    private $lockManager = null;
+
+    /**
+     * @var Application
+     */
+    private $application = null;
+
+    /**
      * Initializes the test environment.
      */
     protected function setUp()
     {
         parent::setUp();
+        $this->lockManager = $this->getMock(LockManagerInterface::class);
         $this->listener = new CommandLockingListener('mock');
+        $this->listener->registerLockManager('mock', $this->lockManager);
+        $this->application = $this->createApplicationWith($this->listener);
     }
 
     /**
@@ -28,7 +47,9 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
      */
     protected function tearDown()
     {
+        $this->application = null;
         $this->listener = null;
+        $this->lockManager = null;
         parent::tearDown();
     }
 
@@ -44,51 +65,131 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotLockIfNotRequested()
     {
+        $this->lockManager->expects($this->never())->method('lock');
 
+        $this->runApplication('test:cmd');
     }
 
     public function testLocksIfRequested()
     {
+        $this->lockManager->expects($this->once())->method('lock');
 
+        $this->runApplication('test:cmd --lock');
     }
 
     public function testUsesExplicitlyRequestedLockManager()
     {
+        $this->lockManager->expects($this->never())->method('lock');
+        $customLockManager = $this->getMock(LockManagerInterface::class);
+        $customLockManager->expects($this->once())->method('lock');
+        $this->listener->registerLockManager('custom', $customLockManager);
 
+        $this->runApplication('test:cmd --lock=custom');
     }
 
     public function testThrowsExceptionIfRequestedLockManagerIsNotAvailable()
     {
-
+        $this->setExpectedException(\RuntimeException::class);
+        $this->runApplication('test:cmd --lock=custom');
     }
 
     public function testRunsCommandIfNoLockIsRequested()
     {
+        $this->assertCommandWillRun($this->once());
 
+        $this->runApplication('test:cmd');
     }
 
     public function testDoesNotRunCommandIfLockingFails()
     {
+        $this->lockManager->expects($this->once())->method('lock')->willReturn(false);
+        $this->assertCommandWillRun($this->never());
 
+        $this->runApplication('test:cmd --lock');
     }
 
     public function testRunsCommandIfLockingSucceeds()
     {
+        $this->lockManager->expects($this->once())->method('lock')->willReturn(true);
+        $this->assertCommandWillRun($this->once());
 
+        $this->runApplication('test:cmd --lock');
     }
 
     public function testReleasesLockWhenLockedCommandTerminates()
     {
+        $this->lockManager->expects($this->any())->method('lock')->willReturn(true);
+        $this->lockManager->expects($this->once())->method('release');
 
+        $this->runApplication('test:cmd --lock');
     }
 
-    public function testDoesNotReleaseWhenCommandWasNotLocked()
+    public function testDoesNotReleaseWhenNoLockWasRequested()
     {
+        $this->lockManager->expects($this->never())->method('release');
 
+        $this->runApplication('test:cmd');
+    }
+
+    public function testDoesNotReleaseWhenCommandLockingFails()
+    {
+        $this->lockManager->expects($this->any())->method('lock')->willReturn(false);
+        $this->lockManager->expects($this->never())->method('release');
+
+        $this->runApplication('test:cmd --lock');
     }
 
     public function testDoesNotInterfereWithOptionsOfCommand()
     {
 
+    }
+
+    /**
+     * Asserts that the test command will run the given number of times.
+     *
+     * Example:
+     *
+     *     $this->assertCommandWillRun($this->once());
+     *
+     * @param \PHPUnit_Framework_MockObject_Matcher_Invocation $invocations
+     */
+    private function assertCommandWillRun(\PHPUnit_Framework_MockObject_Matcher_Invocation $invocations)
+    {
+        $codeMock = $this->getMock(\stdClass::class, array('__invoke'));
+        $codeMock->expects($invocations)
+            ->method('__invoke');
+        $command = $this->application->find('test:cmd');
+        $command->setCode($codeMock);
+    }
+
+    /**
+     * Runs the console application with the given argument line.
+     *
+     * Example:
+     *
+     *     $this->runApplication('test:cmd --lock');
+     *
+     * @param string $commandLineArguments
+     */
+    private function runApplication($commandLineArguments)
+    {
+        $this->application->run(new StringInput($commandLineArguments), new NullOutput());
+    }
+
+    /**
+     * @param CommandLockingListener $listener
+     * @return Application
+     */
+    private function createApplicationWith(CommandLockingListener $listener)
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber($listener);
+        $application = new Application();
+        $application->setDispatcher($dispatcher);
+        $application->setAutoExit(false);
+        $command = new Command('test:cmd');
+        $command->setCode(function() {});
+        $application->add($command);
+        return $application;
     }
 }
