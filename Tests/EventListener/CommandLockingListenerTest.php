@@ -6,7 +6,13 @@ use Matthimatiker\CommandLockingBundle\EventListener\CommandLockingListener;
 use Matthimatiker\CommandLockingBundle\Locking\LockManagerInterface;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\Input;
+use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\StringInput;
+use Symfony\Component\Console\Output\BufferedOutput;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Webfactory\Constraint\IsEventSubscriberConstraint;
@@ -60,7 +66,11 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
 
     public function testAddsLockOption()
     {
+        $this->application->find('test:cmd')->setCode(function (InputInterface $input) {
+            $this->assertTrue($input->hasOption('lock'), '--lock option not defined.');
+        });
 
+        $this->runApplication('test:cmd');
     }
 
     public function testDoesNotLockIfNotRequested()
@@ -141,7 +151,16 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
 
     public function testDoesNotInterfereWithOptionsOfCommand()
     {
+        $command = new Command('test:with-param');
+        $commandInputDefinition = new InputDefinition();
+        $commandInputDefinition->addOption(new InputOption('--command-option', null, InputOption::VALUE_NONE));
+        $command->setDefinition($commandInputDefinition);
+        $command->setCode(function (InputInterface $input) {
+            $this->assertTrue($input->getOption('command-option'));
+        });
+        $this->application->add($command);
 
+        $this->runApplication('test:with-param --command-option');
     }
 
     /**
@@ -173,7 +192,9 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
      */
     private function runApplication($commandLineArguments)
     {
-        $this->application->run(new StringInput($commandLineArguments), new NullOutput());
+        $output = new BufferedOutput();
+        $exitCode = $this->application->run(new StringInput($commandLineArguments), $output);
+        $this->assertEquals(0, $exitCode, $output->fetch());
     }
 
     /**
