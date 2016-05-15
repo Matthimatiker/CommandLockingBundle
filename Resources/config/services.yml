@@ -1,4 +1,6 @@
 services:
-#    matthimatiker_command_locking.example:
-#        class: Matthimatiker\CommandLockingBundle\Example
-#        arguments: ["@service_id", "plain_value", %parameter%]
+    matthimatiker_command_locking.console.locking_listener:
+        class: Matthimatiker\CommandLockingBundle\EventListener\CommandLockingListener
+        arguments: ["default"]
+        tags:
+            - { name: kernel.event_subscriber }
