@@ -147,7 +147,7 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
         $this->lockManager->expects($this->any())->method('lock')->willReturn(false);
         $this->lockManager->expects($this->never())->method('release');
 
-        $this->runApplication('test:cmd --lock');
+        $this->runApplication('test:cmd --lock', ConsoleCommandEvent::RETURN_CODE_DISABLED);
     }
 
     public function testDoesNotInterfereWithOptionsOfCommand()
