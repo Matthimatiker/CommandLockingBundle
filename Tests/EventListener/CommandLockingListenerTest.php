@@ -6,6 +6,7 @@ use Matthimatiker\CommandLockingBundle\EventListener\CommandLockingListener;
 use Matthimatiker\CommandLockingBundle\Locking\LockManagerInterface;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Input\Input;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
@@ -82,7 +83,7 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
 
     public function testLocksIfRequested()
     {
-        $this->lockManager->expects($this->once())->method('lock');
+        $this->lockManager->expects($this->once())->method('lock')->willReturn(true);
 
         $this->runApplication('test:cmd --lock');
     }
@@ -91,7 +92,7 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
     {
         $this->lockManager->expects($this->never())->method('lock');
         $customLockManager = $this->getMock(LockManagerInterface::class);
-        $customLockManager->expects($this->once())->method('lock');
+        $customLockManager->expects($this->once())->method('lock')->willReturn(true);
         $this->listener->registerLockManager('custom', $customLockManager);
 
         $this->runApplication('test:cmd --lock=custom');
@@ -115,7 +116,7 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
         $this->lockManager->expects($this->once())->method('lock')->willReturn(false);
         $this->assertCommandWillRun($this->never());
 
-        $this->runApplication('test:cmd --lock');
+        $this->runApplication('test:cmd --lock', ConsoleCommandEvent::RETURN_CODE_DISABLED);
     }
 
     public function testRunsCommandIfLockingSucceeds()
@@ -189,12 +190,13 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
      *     $this->runApplication('test:cmd --lock');
      *
      * @param string $commandLineArguments
+     * @param integer $expectedExitCode
      */
-    private function runApplication($commandLineArguments)
+    private function runApplication($commandLineArguments, $expectedExitCode = 0)
     {
         $output = new BufferedOutput();
         $exitCode = $this->application->run(new StringInput($commandLineArguments), $output);
-        $this->assertEquals(0, $exitCode, $output->fetch());
+        $this->assertEquals($expectedExitCode, $exitCode, $output->fetch());
     }
 
     /**
@@ -208,6 +210,7 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
         $application = new Application();
         $application->setDispatcher($dispatcher);
         $application->setAutoExit(false);
+        $application->setCatchExceptions(false);
         $command = new Command('test:cmd');
         $command->setCode(function() {});
         $application->add($command);
