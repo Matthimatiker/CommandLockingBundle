@@ -100,14 +100,13 @@ class CommandLockingListener implements EventSubscriberInterface
             // No locking required.
             return;
         }
-        $lockType = $event->getInput()->getOption('lock');
-        if (!$this->getLockManager($lockType)->lock($this->getLockNameFor($event->getCommand()))) {
+        $lockManagerName = $event->getInput()->getOption('lock');
+        if (!$this->lock($event->getCommand(), $lockManagerName)) {
             $event->disableCommand();
             $message = '<info>Cannot get lock, execution of command "%s" skipped.</info>';
             $event->getOutput()->writeln(sprintf($message, $event->getCommand()->getName()));
             return;
         }
-        $this->lockedCommands->attach($event->getCommand(), $lockType);
     }
 
     /**
@@ -117,11 +116,9 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     public function afterCommand(ConsoleTerminateEvent $event)
     {
-        if (!$this->lockedCommands->contains($event->getCommand())) {
-            return;
+        if ($this->isLocked($event->getCommand())) {
+            $this->releaseLock($event->getCommand());
         }
-        $this->getLockManager($this->lockedCommands->offsetGet($event->getCommand()))->release($this->getLockNameFor($event->getCommand()));
-        $this->lockedCommands->detach($event->getCommand());
     }
 
     /**
@@ -133,6 +130,43 @@ class CommandLockingListener implements EventSubscriberInterface
     private function isLockingRequested(InputInterface $input)
     {
         return $input->hasParameterOption('--lock') !== false;
+    }
+
+    /**
+     * Checks if the given command is locked.
+     *
+     * @param Command $command
+     * @return boolean
+     */
+    private function isLocked(Command $command)
+    {
+        return $this->lockedCommands->contains($command);
+    }
+
+    /**
+     * @param Command $command
+     * @param string $lockManagerName
+     * @return boolean True if the lock was obtained.
+     */
+    private function lock(Command $command, $lockManagerName)
+    {
+        if (!$this->getLockManager($lockManagerName)->lock($this->getLockNameFor($command))) {
+            return false;
+        }
+        $this->lockedCommands->attach($command, $lockManagerName);
+        return true;
+    }
+
+    /**
+     * Releases the active lock for the given command.
+     *
+     * @param Command $command
+     */
+    private function releaseLock(Command $command)
+    {
+        $lockManagerName = $this->lockedCommands->offsetGet($command);
+        $this->getLockManager($lockManagerName)->release($this->getLockNameFor($command));
+        $this->lockedCommands->detach($command);
     }
 
     /**
