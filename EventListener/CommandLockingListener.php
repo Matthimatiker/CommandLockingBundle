@@ -88,6 +88,17 @@ class CommandLockingListener implements EventSubscriberInterface
     }
 
     /**
+     * Checks if this listener has a lock manager with the provided name.
+     *
+     * @param string $name
+     * @return boolean
+     */
+    public function hasLockManager($name)
+    {
+
+    }
+
+    /**
      * Called before a command runs.
      *
      * @param ConsoleCommandEvent $event

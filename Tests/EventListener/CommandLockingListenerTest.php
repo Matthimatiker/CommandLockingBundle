@@ -66,6 +66,16 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
         $this->assertThat($this->listener, new IsEventSubscriberConstraint());
     }
 
+    public function testHasLockManagerReturnsTrueIfManagerIsAvailable()
+    {
+        $this->assertTrue($this->listener->hasLockManager('mock'));
+    }
+
+    public function testHasLockManagerReturnsFalseIfManagerIsNotAvailable()
+    {
+        $this->assertFalse($this->listener->hasLockManager('unknown'));
+    }
+
     public function testAddsLockOption()
     {
         $this->application->find('test:cmd')->setCode(function (InputInterface $input) {
