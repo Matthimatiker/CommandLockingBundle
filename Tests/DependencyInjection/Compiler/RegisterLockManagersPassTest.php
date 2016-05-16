@@ -7,44 +7,53 @@ use Matthimatiker\CommandLockingBundle\EventListener\CommandLockingListener;
 use Matthimatiker\CommandLockingBundle\Locking\NullLockManager;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 
 class RegisterLockManagersPassTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * Initializes the test environment.
-     */
-    protected function setUp()
-    {
-        parent::setUp();
-
-    }
-
-    /**
-     * Cleans up the test environment.
-     */
-    protected function tearDown()
-    {
-
-        parent::tearDown();
-    }
-
     public function testRegistersTaggedLockManager()
     {
-        $listener = $this->createContainer()->get(RegisterLockManagersPass::LOCKING_LISTENER_SERVICE_ID);
+        $listener = $this->getCompiledContainer()->get(RegisterLockManagersPass::LOCKING_LISTENER_SERVICE_ID);
 
         $this->assertTrue($listener->hasLockManager('null'));
     }
 
     public function testRegistersLockManagerThatIsTaggedMultipleTimes()
     {
-        $listener = $this->createContainer()->get(RegisterLockManagersPass::LOCKING_LISTENER_SERVICE_ID);
+        $listener = $this->getCompiledContainer()->get(RegisterLockManagersPass::LOCKING_LISTENER_SERVICE_ID);
 
         $this->assertTrue($listener->hasLockManager('first'));
         $this->assertTrue($listener->hasLockManager('second'));
     }
 
+    public function testThrowsExceptionIfAliasIsMissing()
+    {
+        $container = $this->createContainer();
+        $container->getDefinition('matthimatiker_command_locking.console.lock_manager.multiple_tags')
+            ->addTag(RegisterLockManagersPass::LOCK_MANAGER_TAG);
+
+        $this->setExpectedException(InvalidArgumentException::class);
+        $container->compile();
+    }
+
     /**
-     * Creates a compiled container.
+     * Create a test container and compiles it.
+     *
+     * @return ContainerBuilder
+     */
+    private function getCompiledContainer()
+    {
+        $container = $this->createContainer();
+        $container->compile();
+        return $container;
+    }
+
+    /**
+     * Creates a container that contains the definition for the locking listener
+     * and several tagged lock managers.
+     *
+     * The container must be compiled, otherwise the pass is not called. The definitions
+     * can be changed before compilation.
      *
      * @return ContainerBuilder
      */
@@ -67,7 +76,6 @@ class RegisterLockManagersPassTest extends \PHPUnit_Framework_TestCase
                 ->addTag(RegisterLockManagersPass::LOCK_MANAGER_TAG, array('alias' => 'second'))
         );
         $container->addCompilerPass(new RegisterLockManagersPass());
-        $container->compile();
         return $container;
     }
 }
