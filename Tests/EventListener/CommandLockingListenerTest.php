@@ -164,6 +164,11 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
         $this->runApplication('test:with-param --command-option');
     }
 
+    public function testWorksIfSubCommandIsCalled()
+    {
+
+    }
+
     /**
      * Asserts that the test command will run the given number of times.
      *
