@@ -20,7 +20,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class CommandLockingListener implements EventSubscriberInterface
 {
     /**
-     * Name of the lock manager that is used if the manager is not explicitly
+     * Alias of the lock manager that is used if the manager is not explicitly
      * specified via command line option.
      *
      * @var string
@@ -219,7 +219,8 @@ class CommandLockingListener implements EventSubscriberInterface
             '--lock',
             null,
             InputOption::VALUE_OPTIONAL,
-            'Request a lock to ensure that the command does not run in parallel.',
+            'Request a lock to ensure that the command does not run in parallel. ' .
+            'To use a specific lock manager pass its alias.',
             $this->defaultLockManagerAlias
         );
         // Register the option at application level to ensure that it shows up in the help.
