@@ -36,4 +36,15 @@ class NullLockManagerTest extends \PHPUnit_Framework_TestCase
     {
         $this->assertInstanceOf(LockManagerInterface::class, $this->lockManager);
     }
+
+    public function testLockReturnsTrue()
+    {
+        $this->assertTrue($this->lockManager->lock('any'));
+    }
+
+    public function testReleaseIsCallableWithoutError()
+    {
+        $this->setExpectedException(null);
+        $this->lockManager->release('any');
+    }
 }
