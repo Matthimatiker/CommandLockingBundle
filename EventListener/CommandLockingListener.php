@@ -36,6 +36,13 @@ class CommandLockingListener implements EventSubscriberInterface
     private $lockManagers = array();
 
     /**
+     * Contains all commands that are locked.
+     *
+     * @var \SplObjectStorage
+     */
+    private $lockedCommands = null;
+
+    /**
      * Returns an array of event names this subscriber wants to listen to.
      *
      * The array keys are event names and the value can be:
@@ -66,6 +73,7 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     public function __construct($defaultLockManagerName)
     {
+        $this->lockedCommands = new \SplObjectStorage();
         $this->defaultLockManagerName = $defaultLockManagerName;
     }
 
@@ -97,7 +105,9 @@ class CommandLockingListener implements EventSubscriberInterface
             $event->disableCommand();
             $message = '<info>Cannot get lock, execution of command "%s" skipped.</info>';
             $event->getOutput()->writeln(sprintf($message, $event->getCommand()->getName()));
+            return;
         }
+        $this->lockedCommands->attach($event->getCommand(), $lockType);
     }
 
     /**
@@ -107,12 +117,11 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     public function afterCommand(ConsoleTerminateEvent $event)
     {
-        if (!$this->isLockingRequested($event->getInput())) {
-            // No locking required.
+        if (!$this->lockedCommands->contains($event->getCommand())) {
             return;
         }
-        $lockType = $event->getInput()->getOption('lock');
-        $this->getLockManager($lockType)->release($this->getLockNameFor($event->getCommand()));
+        $this->getLockManager($this->lockedCommands->offsetGet($event->getCommand()))->release($this->getLockNameFor($event->getCommand()));
+        $this->lockedCommands->detach($event->getCommand());
     }
 
     /**
