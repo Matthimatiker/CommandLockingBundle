@@ -165,6 +165,9 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
         $this->runApplication('test:with-param --command-option');
     }
 
+    /**
+     * @see http://symfony.com/doc/current/components/console/introduction.html#calling-an-existing-command
+     */
     public function testWorksIfSubCommandIsCalled()
     {
         $this->lockManager->expects($this->any())->method('lock')->willReturn(true);
