@@ -15,6 +15,7 @@ use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\NullOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Webfactory\Constraint\IsEventSubscriberConstraint;
 
@@ -166,7 +167,18 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
 
     public function testWorksIfSubCommandIsCalled()
     {
+        $this->lockManager->expects($this->any())->method('lock')->willReturn(true);
+        $subCommand = new Command('test:sub-cmd');
+        $subCommand->setCode(function () {});
+        $this->application->add($subCommand);
+        // Ensure that the sub-command is called.
+        $this->application->find('test:cmd')->setCode(function (InputInterface $input, OutputInterface $output) {
+            $command = $this->application->find('test:sub-cmd');
+            return $command->run(new StringInput('test:sub-cmd'), $output);
+        });
 
+        $this->setExpectedException(null);
+        $this->runApplication('test:cmd --lock');
     }
 
     /**

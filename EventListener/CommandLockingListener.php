@@ -14,6 +14,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 /**
  * Hooks into the life-cycle of console commands and manages locks if requested.
  *
+ * @see http://symfony.com/doc/current/components/console/events.html
  * @see http://php-and-symfony.matthiasnoback.nl/2013/11/symfony2-add-a-global-option-to-console-commands-and-generate-pid-file/
  */
 class CommandLockingListener implements EventSubscriberInterface

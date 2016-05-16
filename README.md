@@ -19,3 +19,5 @@
 ## Usage ##
 
 ## Known Issues ##
+
+does not work with sub-commands
