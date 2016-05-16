@@ -100,7 +100,7 @@ class CommandLockingListenerTest extends \PHPUnit_Framework_TestCase
 
     public function testThrowsExceptionIfRequestedLockManagerIsNotAvailable()
     {
-        $this->setExpectedException(\RuntimeException::class);
+        $this->setExpectedException(\InvalidArgumentException::class);
         $this->runApplication('test:cmd --lock=custom');
     }
 
