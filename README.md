@@ -1,7 +1,7 @@
 # CommandLockingBundle #
 
 [![Build Status](https://travis-ci.org/Matthimatiker/CommandLockingBundle.svg?branch=master)](https://travis-ci.org/Matthimatiker/CommandLockingBundle)
-[![Coverage Status](https://coveralls.io/repos/Matthimatiker/CommandLockingBundle/badge.svg?branch=master&service=github)](https://coveralls.io/github/Matthimatiker/CommandLockingBundle?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/Matthimatiker/CommandLockingBundle/badge.svg?branch=master)](https://coveralls.io/github/Matthimatiker/CommandLockingBundle?branch=master)
 
 Sometimes you want to ensure that a Symfony console command does not run in parallel.
 This bundle adds an optional locking feature to all console commands that can be used to prevent parallel execution.
