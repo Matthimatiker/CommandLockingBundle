@@ -1,6 +1,7 @@
 {
     "name": "matthimatiker/command-locking-bundle",
-    "description": "",
+    "description": "Adds an optional locking feature to all console commands that can be used to prevent parallel execution.",
+    "keywords": ["symfony", "console", "command", "locking", "lock"],
     "minimum-stability": "stable",
     "license": "MIT",
     "authors": [
