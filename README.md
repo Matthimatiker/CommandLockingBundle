@@ -59,9 +59,3 @@ the new lock manager:
 
 When sub-command are called as described in the [official documentation](http://symfony.com/doc/current/components/console/introduction.html#calling-an-existing-command),
 then locking cannot be used for the sub-commands as the life-cycle events are not fired.
-
-
-## Initialization Tasks (remove this block once you are done) ##
-
-- Publish at [Packagist](https://packagist.org/)
-- Create webhook that pushes repository updates to [Packagist](https://packagist.org/)
