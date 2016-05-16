@@ -156,7 +156,7 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     private function getLockNameFor(Command $command)
     {
-        return $command->getName();
+        return (new \ReflectionClass($this))->getShortName() . '-' . $command->getName();
     }
 
     /**
