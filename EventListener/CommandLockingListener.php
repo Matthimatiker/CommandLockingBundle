@@ -25,12 +25,12 @@ class CommandLockingListener implements EventSubscriberInterface
      *
      * @var string
      */
-    private $defaultLockManagerName = null;
+    private $defaultLockManagerAlias = null;
 
     /**
      * The registered lock managers.
      *
-     * The name of the lock manager is used as key.
+     * The alias of the lock manager is used as key.
      *
      * @var array<string, LockManagerInterface>
      */
@@ -70,32 +70,36 @@ class CommandLockingListener implements EventSubscriberInterface
     }
 
     /**
-     * @param string $defaultLockManagerName
+     * @param string $defaultLockManagerAlias
      */
-    public function __construct($defaultLockManagerName)
+    public function __construct($defaultLockManagerAlias)
     {
         $this->lockedCommands = new \SplObjectStorage();
-        $this->defaultLockManagerName = $defaultLockManagerName;
+        $this->defaultLockManagerAlias = $defaultLockManagerAlias;
     }
 
     /**
-     * @param string $name
+     * Registers a lock manager and uses the given alias to reference it.
+     *
+     * If necessary, the same lock manager can be registered multiple times with different aliases.
+     *
+     * @param string $alias
      * @param LockManagerInterface $lockManager
      */
-    public function registerLockManager($name, LockManagerInterface $lockManager)
+    public function registerLockManager($alias, LockManagerInterface $lockManager)
     {
-        $this->lockManagers[$name] = $lockManager;
+        $this->lockManagers[$alias] = $lockManager;
     }
 
     /**
-     * Checks if this listener has a lock manager with the provided name.
+     * Checks if this listener has a lock manager with the provided alias.
      *
-     * @param string $name
+     * @param string $alias
      * @return boolean
      */
-    public function hasLockManager($name)
+    public function hasLockManager($alias)
     {
-        return isset($this->lockManagers[$name]);
+        return isset($this->lockManagers[$alias]);
     }
 
     /**
@@ -112,11 +116,11 @@ class CommandLockingListener implements EventSubscriberInterface
             // No locking required.
             return;
         }
-        $lockManagerName = $event->getInput()->getOption('lock');
-        if (!$this->lock($event->getCommand(), $lockManagerName)) {
+        $lockManagerAlias = $event->getInput()->getOption('lock');
+        if (!$this->lock($event->getCommand(), $lockManagerAlias)) {
             $event->disableCommand();
-            $message = '<comment>Cannot get lock, execution of command "%s" skipped.</comment>';
-            $event->getOutput()->writeln(sprintf($message, $event->getCommand()->getName()));
+            $message = '<comment>Cannot get lock from lock manager "%s", execution of command "%s" skipped.</comment>';
+            $event->getOutput()->writeln(sprintf($message, $lockManagerAlias, $event->getCommand()->getName()));
         }
     }
 
@@ -156,15 +160,15 @@ class CommandLockingListener implements EventSubscriberInterface
 
     /**
      * @param Command $command
-     * @param string $lockManagerName
+     * @param string $lockManagerAlias
      * @return boolean True if the lock was obtained.
      */
-    private function lock(Command $command, $lockManagerName)
+    private function lock(Command $command, $lockManagerAlias)
     {
-        if (!$this->getLockManager($lockManagerName)->lock($this->getLockNameFor($command))) {
+        if (!$this->getLockManager($lockManagerAlias)->lock($this->getLockNameFor($command))) {
             return false;
         }
-        $this->lockedCommands->attach($command, $lockManagerName);
+        $this->lockedCommands->attach($command, $lockManagerAlias);
         return true;
     }
 
@@ -175,22 +179,22 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     private function releaseLock(Command $command)
     {
-        $lockManagerName = $this->lockedCommands->offsetGet($command);
-        $this->getLockManager($lockManagerName)->release($this->getLockNameFor($command));
+        $lockManagerAlias = $this->lockedCommands->offsetGet($command);
+        $this->getLockManager($lockManagerAlias)->release($this->getLockNameFor($command));
         $this->lockedCommands->detach($command);
     }
 
     /**
-     * @param string $name
+     * @param string $alias
      * @return LockManagerInterface
      * @throws \InvalidArgumentException If the requested lock manager does not exist.
      */
-    private function getLockManager($name)
+    private function getLockManager($alias)
     {
-        if (!$this->hasLockManager($name)) {
-            throw new \InvalidArgumentException('Lock manager "' . $name . '" was not registered.');
+        if (!$this->hasLockManager($alias)) {
+            throw new \InvalidArgumentException('No lock manager was registered for alias "' . $alias . '".');
         }
-        return $this->lockManagers[$name];
+        return $this->lockManagers[$alias];
     }
 
     /**
@@ -216,7 +220,7 @@ class CommandLockingListener implements EventSubscriberInterface
             null,
             InputOption::VALUE_OPTIONAL,
             'Request a lock to ensure that the command does not run in parallel.',
-            $this->defaultLockManagerName
+            $this->defaultLockManagerAlias
         );
         // Register the option at application level to ensure that it shows up in the help.
         $command->getApplication()->getDefinition()->addOption($lockOption);
