@@ -3,6 +3,7 @@
 namespace Matthimatiker\CommandLockingBundle\Tests\Locking;
 
 use Matthimatiker\CommandLockingBundle\Locking\FileLockManager;
+use Matthimatiker\CommandLockingBundle\Locking\LockManagerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
 class FileLockManagerTest extends \PHPUnit_Framework_TestCase
@@ -32,6 +33,11 @@ class FileLockManagerTest extends \PHPUnit_Framework_TestCase
         $this->lockManager = null;
         $this->removeLockDirectory();
         parent::tearDown();
+    }
+
+    public function testImplementsInterface()
+    {
+        $this->assertInstanceOf(LockManagerInterface::class, $this->lockManager);
     }
 
     public function testCanGetLock()
