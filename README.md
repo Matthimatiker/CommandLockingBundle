@@ -63,7 +63,5 @@ then locking cannot be used for the sub-commands as the life-cycle events are no
 
 ## Initialization Tasks (remove this block once you are done) ##
 
-- Activate builds in [Travis CI](https://travis-ci.org/)
-- Activate repository at [Coveralls](https://coveralls.io)
 - Publish at [Packagist](https://packagist.org/)
 - Create webhook that pushes repository updates to [Packagist](https://packagist.org/)
