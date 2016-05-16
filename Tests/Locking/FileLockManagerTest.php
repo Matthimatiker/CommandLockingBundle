@@ -70,6 +70,14 @@ class FileLockManagerTest extends \PHPUnit_Framework_TestCase
         $this->lockManager->release('missing');
     }
 
+    public function testDifferentListenersCannotHoldSameLock()
+    {
+        $this->lockManager->lock('test');
+
+        $anotherLockManager = new FileLockManager($this->getLockDirectory());
+        $this->assertFalse($anotherLockManager->lock('test'));
+    }
+
     /**
      * Creates a fresh lock directory.
      */
