@@ -95,7 +95,7 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     public function hasLockManager($name)
     {
-
+        return isset($this->lockManagers[$name]);
     }
 
     /**
@@ -187,7 +187,7 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     private function getLockManager($name)
     {
-        if (!isset($this->lockManagers[$name])) {
+        if (!$this->hasLockManager($name)) {
             throw new \InvalidArgumentException('Lock manager "' . $name . '" was not registered.');
         }
         return $this->lockManagers[$name];
