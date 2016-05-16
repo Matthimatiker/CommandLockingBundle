@@ -103,9 +103,8 @@ class CommandLockingListener implements EventSubscriberInterface
         $lockManagerName = $event->getInput()->getOption('lock');
         if (!$this->lock($event->getCommand(), $lockManagerName)) {
             $event->disableCommand();
-            $message = '<info>Cannot get lock, execution of command "%s" skipped.</info>';
+            $message = '<comment>Cannot get lock, execution of command "%s" skipped.</comment>';
             $event->getOutput()->writeln(sprintf($message, $event->getCommand()->getName()));
-            return;
         }
     }
 
