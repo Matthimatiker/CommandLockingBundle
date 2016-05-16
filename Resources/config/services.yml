@@ -1,7 +1,10 @@
+parameters:
+    matthimatiker_command_locking.console.default_lock_manager_alias: "file"
+
 services:
     matthimatiker_command_locking.console.locking_listener:
         class: Matthimatiker\CommandLockingBundle\EventListener\CommandLockingListener
-        arguments: ["file"]
+        arguments: ["%matthimatiker_command_locking.console.default_lock_manager_alias%"]
         tags:
             - { name: kernel.event_subscriber }
 
