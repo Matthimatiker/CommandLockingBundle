@@ -17,7 +17,7 @@ class NullLockManager implements LockManagerInterface
      */
     public function lock($name)
     {
-        // TODO: Implement lock() method.
+        return true;
     }
 
     /**
@@ -29,6 +29,5 @@ class NullLockManager implements LockManagerInterface
      */
     public function release($name)
     {
-        // TODO: Implement release() method.
     }
 }
