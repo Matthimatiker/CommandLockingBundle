@@ -1,6 +1,12 @@
 services:
     matthimatiker_command_locking.console.locking_listener:
         class: Matthimatiker\CommandLockingBundle\EventListener\CommandLockingListener
-        arguments: ["default"]
+        arguments: ["file"]
+        calls:
+            - ["registerLockManager", ["file", "@matthimatiker_command_locking.console.lock_manager.file"]]
         tags:
             - { name: kernel.event_subscriber }
+
+    matthimatiker_command_locking.console.lock_manager.file:
+        class: Matthimatiker\CommandLockingBundle\Locking\FileLockManager
+        arguments: ["%kernel.cache_dir%/command-locks"]
