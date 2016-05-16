@@ -7,6 +7,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleTerminateEvent;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -24,6 +25,15 @@ class CommandLockingListener implements EventSubscriberInterface
      * @var string
      */
     private $defaultLockManagerName = null;
+
+    /**
+     * The registered lock managers.
+     *
+     * The name of the lock manager is used as key.
+     *
+     * @var array<string, LockManagerInterface>
+     */
+    private $lockManagers = array();
 
     /**
      * Returns an array of event names this subscriber wants to listen to.
@@ -65,7 +75,7 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     public function registerLockManager($name, LockManagerInterface $lockManager)
     {
-
+        $this->lockManagers[$name] = $lockManager;
     }
 
     /**
@@ -76,6 +86,18 @@ class CommandLockingListener implements EventSubscriberInterface
     public function beforeCommand(ConsoleCommandEvent $event)
     {
         $this->registerLockOption($event->getCommand());
+        // Bind the definition to ensure that we can read the lock option from the input.
+        $event->getInput()->bind($event->getCommand()->getDefinition());
+        if (!$this->isLockingRequested($event->getInput())) {
+            // No locking required.
+            return;
+        }
+        $lockType = $event->getInput()->getOption('lock');
+        if (!$this->getLockManager($lockType)->lock($this->getLockNameFor($event->getCommand()))) {
+            $event->disableCommand();
+            $message = '<info>Cannot get lock, execution of command "%s" skipped.</info>';
+            $event->getOutput()->writeln(sprintf($message, $event->getCommand()->getName()));
+        }
     }
 
     /**
@@ -85,6 +107,47 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     public function afterCommand(ConsoleTerminateEvent $event)
     {
+        if (!$this->isLockingRequested($event->getInput())) {
+            // No locking required.
+            return;
+        }
+        $lockType = $event->getInput()->getOption('lock');
+        $this->getLockManager($lockType)->release($this->getLockNameFor($event->getCommand()));
+    }
+
+    /**
+     * Checks if locking was requested for the current command.
+     *
+     * @param InputInterface $input
+     * @return boolean
+     */
+    private function isLockingRequested(InputInterface $input)
+    {
+        return $input->hasParameterOption('--lock') !== false;
+    }
+
+    /**
+     * @param string $name
+     * @return LockManagerInterface
+     * @throws \InvalidArgumentException If the requested lock manager does not exist.
+     */
+    private function getLockManager($name)
+    {
+        if (!isset($this->lockManagers[$name])) {
+            throw new \InvalidArgumentException('Lock manager "' . $name . '" was not registered.');
+        }
+        return $this->lockManagers[$name];
+    }
+
+    /**
+     * Returns the lock name for the given command.
+     *
+     * @param Command $command
+     * @return string
+     */
+    private function getLockNameFor(Command $command)
+    {
+        return $command->getName();
     }
 
     /**
