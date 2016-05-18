@@ -8,6 +8,7 @@ use Symfony\Component\Filesystem\LockHandler;
  * Uses files to create locks.
  *
  * @see \Symfony\Component\Filesystem\LockHandler
+ * @see http://symfony.com/doc/current/components/filesystem/lock_handler.html
  */
 class FileLockManager implements LockManagerInterface
 {
@@ -48,7 +49,7 @@ class FileLockManager implements LockManagerInterface
         if ($this->isLocked($name)) {
             return false;
         }
-        $lock = new LockHandler($name, $this->lockDirectory);
+        $lock = new LockHandler($name . '.lock', $this->lockDirectory);
         if ($lock->lock()) {
             // Obtained lock.
             $this->activeLocksByName[$name] = $lock;
