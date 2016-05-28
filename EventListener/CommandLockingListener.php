@@ -7,6 +7,8 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleTerminateEvent;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -109,14 +111,12 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     public function beforeCommand(ConsoleCommandEvent $event)
     {
-        $this->registerLockOption($event->getCommand());
-        // Bind the definition to ensure that we can read the lock option from the input.
-        $event->getInput()->bind($event->getCommand()->getDefinition());
-        if (!$this->isLockingRequested($event->getInput())) {
+        $input = $this->registerLockOption($event);
+        if (!$this->isLockingRequested($input)) {
             // No locking required.
             return;
         }
-        $lockManagerAlias = $event->getInput()->getOption('lock');
+        $lockManagerAlias = $input->getOption('lock');
         if (!$this->lock($event->getCommand(), $lockManagerAlias)) {
             $event->disableCommand();
             $message = '<comment>Cannot get lock from lock manager "%s", execution of command "%s" skipped.</comment>';
@@ -144,7 +144,7 @@ class CommandLockingListener implements EventSubscriberInterface
      */
     private function isLockingRequested(InputInterface $input)
     {
-        return $input->hasParameterOption('--lock') !== false;
+        return $input->getOption('lock') !== false;
     }
 
     /**
@@ -211,21 +211,55 @@ class CommandLockingListener implements EventSubscriberInterface
     /**
      * Registers the "--lock" option that is used to activate locking.
      *
-     * @param Command $command
+     * @param ConsoleCommandEvent $event
+     * @return InputInterface
      */
-    private function registerLockOption(Command $command)
+    private function registerLockOption(ConsoleCommandEvent $event)
     {
-        $lockOption = new InputOption(
-            '--lock',
-            null,
-            InputOption::VALUE_OPTIONAL,
-            'Request a lock to ensure that the command does not run in parallel. ' .
-            'To use a specific lock manager pass its alias.',
-            $this->defaultLockManagerAlias
+        $options = array(
+            new InputOption(
+                '--lock',
+                null,
+                InputOption::VALUE_OPTIONAL,
+                'Request a lock to ensure that the command does not run in parallel. ' .
+                'To use a specific lock manager pass its alias.',
+                $this->defaultLockManagerAlias
+            )
         );
-        // Register the option at application level to ensure that it shows up in the help.
-        $command->getApplication()->getDefinition()->addOption($lockOption);
-        // Register at command level to ensure that the option is parsed properly.
-        $command->getDefinition()->addOption($lockOption);
+        $this->registerOptions($event, $options);
+        return $this->createListenerInput($event, $options);
+    }
+
+    /**
+     * @param ConsoleCommandEvent $event
+     * @param InputOption[] $options
+     */
+    private function registerOptions(ConsoleCommandEvent $event, array $options)
+    {
+        $command = $event->getCommand();
+        foreach ($options as $option) {
+            // Register the option at application level to ensure that it shows up in the help.
+            $command->getApplication()->getDefinition()->addOption($option);
+            // Register at command level to ensure that the option is parsed properly.
+            $command->getDefinition()->addOption($option);
+        }
+    }
+
+    /**
+     * @param ConsoleCommandEvent $event
+     * @param InputOption[] $options
+     * @return ArrayInput
+     */
+    private function createListenerInput(ConsoleCommandEvent $event, array $options)
+    {
+        $rawOptions = array();
+        $definition = new InputDefinition();
+        foreach ($options as $option) {
+            // Copy the values of the options we are interested in...
+            $rawOptions['--' . $option->getName()] = $event->getInput()->getParameterOption('--' . $option->getName());
+            // ... and bind the definition to ensure that we can read the lock option from the input object.
+            $definition->addOption($option);
+        }
+        return new ArrayInput($rawOptions, $definition);
     }
 }

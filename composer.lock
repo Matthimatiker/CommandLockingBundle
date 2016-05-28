@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "4d4e23d21c7961ca7e9cc58666bfd446",
-    "content-hash": "2c5bdd0ad0f15cd5fbebda80786c4ff1",
+    "hash": "867710bb9b13dda66fd635464895615d",
+    "content-hash": "cd3f842d825749d22e04356cac871181",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -2680,33 +2680,33 @@
         },
         {
             "name": "webfactory/symfony-application-tests",
-            "version": "0.4.2",
+            "version": "0.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webfactory/symfony-application-tests.git",
-                "reference": "9fe04d8d8efdecb83bbc4f9c125c5ce595bfbec0"
+                "reference": "76db6a8a6d7073381be4535d6c13bffeda61f0fe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webfactory/symfony-application-tests/zipball/9fe04d8d8efdecb83bbc4f9c125c5ce595bfbec0",
-                "reference": "9fe04d8d8efdecb83bbc4f9c125c5ce595bfbec0",
+                "url": "https://api.github.com/repos/webfactory/symfony-application-tests/zipball/76db6a8a6d7073381be4535d6c13bffeda61f0fe",
+                "reference": "76db6a8a6d7073381be4535d6c13bffeda61f0fe",
                 "shasum": ""
             },
             "require": {
                 "doctrine/common": "~2.4",
                 "jms/security-extra-bundle": "~1.5",
                 "php": "^5.5.0 | ^7.0.0",
-                "phpunit/phpunit": "~3.7 | ~4.0",
-                "symfony/symfony": "~2.3",
+                "phpunit/phpunit": "^4.0.0 | ^5.0.0",
+                "symfony/symfony": "^2.3.0 | ^3.0.0",
                 "twig/twig": "~1.14"
             },
             "require-dev": {
                 "mayflower/php-codebrowser": "~1.1",
                 "pdepend/pdepend": "~2.0",
-                "phploc/phploc": "~2.0",
+                "phploc/phploc": "^2.0.0 | 3.0.0",
                 "phpmd/phpmd": "~2.0",
                 "sebastian/phpcpd": "~2.0",
-                "sensio/framework-extra-bundle": "~2.3",
+                "sensio/framework-extra-bundle": "^2.3.0 | ^3.0.0",
                 "squizlabs/php_codesniffer": "~1.5"
             },
             "type": "library",
@@ -2737,7 +2737,7 @@
                 "testing",
                 "tests"
             ],
-            "time": "2016-02-08 19:48:56"
+            "time": "2016-05-27 20:34:30"
         }
     ],
     "aliases": [],
